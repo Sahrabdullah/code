@@ -42,3 +42,5 @@ REVIEW TEXT NOT NULL,
 FOREIGN KEY (USER_ID) REFERENCES USERS (ID))`
 
 
+// exports data of db, and tables all alone
+module.exports = { db, create_users_table, create_cars_table, create_user_booking_table, create_feedback_table }
