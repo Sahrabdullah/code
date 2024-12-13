@@ -200,6 +200,24 @@ server.delete(`/cars/deletecar/:id`,verifyToken, (req, res) => {
             return res.send(`Car with the id ${req.params.id} is deleted`)
     })
 })
+
+
+// REVIEW
+// ADD REVIEW
+server.post(`/addreview`, (req, res) => {
+    const user_id = req.body.user_id
+    const review = req.body.review
+
+    const reviews = `INSERT INTO REVIEWS (USER_ID,REVIEW) VALUES (${user_id}, '${review}')`
+    db.run(reviews, (err) => {
+        if (err) {
+            console.log(err)
+            return res.send(err)
+        }
+        else
+            return res.send(`Thank You For Your Review`)
+    })
+})
             return res.send(`The user with the id ${req.params.id} is deleted`)
         }})})
 
