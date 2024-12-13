@@ -267,6 +267,7 @@ server.post(`/book`, ((req, res) => {
 
 //GET ALL BOOKINGS
 //-- ADMIN
+server.get(`/booking`,(req, res) => {
     const bookings = `SELECT * FROM BOOKING`
     db.all(bookings, (err, rows) => {
         if (err) {
