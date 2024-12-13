@@ -97,6 +97,24 @@ server.get(`/cars`, (req, res) => { //req body
             return res.send(rows)
     })
 })
+
+//SEARCH CAR BY ID 
+//ROUTE PARAMS
+server.get(`/cars/:id`, (req, res) => { //route params
+    const car = `SELECT * FROM CARS WHERE ID =${req.params.id}`
+    db.get(car, (err, rows) => {
+        if (err) { //send the error
+            console.log(err)
+            return res.send(err)
+        }
+        else if (!rows) {  //not found id
+            return res.status(404).send(`THE CAR WITH ID ${req.params.id} IS NOT FOUND`) //404 not found
+        }
+        else //successful 
+            return res.send(rows)
+    })
+})
+
             return res.send(`The user with the id ${req.params.id} is deleted`)
         }})})
 
