@@ -144,6 +144,39 @@ server.put(`/cars/edit/:id`, (req, res) => {
     })
 })
 
+
+// SEARCH CAR BY FEATURES
+// QUERY PARAMS
+server.get(`/car`, (req, res) => {
+        let brand = req.query.brand;
+        let model = req.query.model;
+        let price = req.query.price;
+        let km = req.query.km;
+    
+        let query = `SELECT * FROM CARS WHERE 1=1`; // Base query to append conditions
+    
+        if (brand) 
+            query += ` AND BRAND = '${brand}'`;
+        
+        if (model) 
+            query += ` AND MODEL = '${model}'`;
+        
+        if (price) 
+            query += ` AND PRICE = ${price}`;
+        
+        if (km) 
+            query += ` AND KM = ${km}`;
+    
+        db.all(query, (err, rows) => {
+            if (err) {
+                console.log(err);
+                return res.status(500).send(err);
+            }
+            else {
+                return res.json(rows); // Return filtered cars
+            }
+        });
+    });
             return res.send(`This id ${req.params.id} is not found`)
         }
         else
