@@ -278,6 +278,21 @@ server.get(`/booking`,(req, res) => {
             return res.send(rows)
     })
 })
+
+// DELETE BOOKINGS
+//-- ADMIN
+server.delete(`/delete/book/:id`, (req, res) => {
+    // const ISADMIN = req.userDetails.isAdmin;
+    // if (ISADMIN !== 1)
+    //     return res.status(403).send("you are not an admin")
+    const books = `DELETE FROM BOOKING WHERE ID = ${req.params.id}`
+    db.run(books, (err) => {
+        if (err) {
+            console.log(err)
+            return res.send(err)
+        }
+        else
             return res.send(`The user with the id ${req.params.id} is deleted`)
-        }})})
+    })
+})
 
