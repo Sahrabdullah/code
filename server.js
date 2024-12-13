@@ -296,3 +296,29 @@ server.delete(`/delete/book/:id`, (req, res) => {
     })
 })
 
+server.listen(port, (error) => {
+    if (error) {
+        console.log('The server did not start:', error)
+        return
+    }
+    db.serialize(() => {
+        console.log(`server started at port ${port}`)
+        db.serialize(() => {
+            db.run(db_access.create_users_table, (err) => {
+                if (err)
+                    console.log("error creating user table " + err)
+            });
+            db.run(db_access.create_cars_table, (err) => {
+                if (err)
+                    console.log("error creating cars table " + err)
+            });
+            db.run(db_access.create_user_booking_table, (err) => {
+                if (err)
+                    console.log("error creating booking table " + err)
+            });
+            db.run(db_access.create_feedback_table, (err) => {
+                if (err)
+                    console.log("error creating feedback table " + err)
+            });
+        })
+    })
