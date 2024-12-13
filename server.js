@@ -247,6 +247,24 @@ server.delete(`/deletereview/:id`, (req, res) => {
             return res.send(`Review with the id ${req.params.id} is deleted`)
     })
 })
+
+//BOOKING
+//BOOKING TEST DRIVE
+server.post(`/book`, ((req, res) => {
+    const day = req.body.day
+    const user_id = req.body.user_id
+    const car_id = req.body.car_id
+    const book = `INSERT INTO BOOKING (DAY, USER_ID, CAR_ID) VALUES ('${day}', '${user_id}',${car_id})`
+    db.run(book, (err) => {
+        if (err) {
+            console.log(err)
+            return res.send(err)
+        }
+        else
+            return res.send(`successfully booked ${day}`)
+    })
+}))
+
             return res.send(`The user with the id ${req.params.id} is deleted`)
         }})})
 
