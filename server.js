@@ -265,6 +265,18 @@ server.post(`/book`, ((req, res) => {
     })
 }))
 
+//GET ALL BOOKINGS
+//-- ADMIN
+    const bookings = `SELECT * FROM BOOKING`
+    db.all(bookings, (err, rows) => {
+        if (err) {
+            console.log(err)
+            return res.send(err)
+        }
+        else
+            return res.send(rows)
+    })
+})
             return res.send(`The user with the id ${req.params.id} is deleted`)
         }})})
 
