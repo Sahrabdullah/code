@@ -139,6 +139,11 @@ server.put(`/cars/edit/:id`, (req, res) => {
             return res.send(err)
         }
         else if (!row) {
+        else
+            return res.send(`Car with the id ${req.params.id} is updated successfully`)
+    })
+})
+
             return res.send(`This id ${req.params.id} is not found`)
         }
         else
