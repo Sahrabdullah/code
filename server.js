@@ -24,3 +24,17 @@ server.post(`/user/register`, (req, res) => { //req body
     })
 })
 
+
+//LOGIN
+server.post(`/user/login`, (req, res) => { //req body
+    // const name = req.body.name
+    const email = req.body.email
+    const password = req.body.password
+
+    db.get(`SELECT * FROM USERS WHERE EMAIL= '${email}' AND PASSWORD = '${password}' `, (err, row) => {
+        if (err || !row)
+            return res.status(401).send(`Fail to Login`) //401 is unauthorized user
+        else
+            return res.status(201).send(`Login Successfull`)  //201 is created
+    })
+})
