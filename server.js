@@ -57,13 +57,22 @@ server.get(`/users`, (req, res) => { //req body
 server.delete(`/user/delete/:id`,(req,res)=>{
      const user = `DELETE FROM USERS WHERE ID = ${req.params.id}`
      db.run(user, (err) => {
+server.delete(`/user/delete/:id`, (req, res) => {
+    const user = `DELETE FROM USERS WHERE ID = ${req.params.id}`
+    db.run(user, (err) => {
         if (err) {
             console.log(err)
             return res.send(err)
         }
-        else if(!row){
-            return res.send (`This id ${req.params.id} is not found`)}
-        else{
+        else if (!row) {
+            return res.send(`This id ${req.params.id} is not found`)
+        }
+        else {
+            return res.send(`The user with the id ${req.params.id} is deleted`)
+        }
+    })
+})
+
 
 // CARS
 //ADD CARS
