@@ -177,10 +177,27 @@ server.get(`/car`, (req, res) => {
             }
         });
     });
+
+
+
+//DELETE CARS
+//ROUTE PARAMS
+//-- ADMIN
+server.delete(`/cars/deletecar/:id`,verifyToken, (req, res) => {
+    const ISADMIN = req.userDetails.isAdmin;
+    if (ISADMIN !== 1)
+        return res.status(403).send("you are not an admin")
+    const car = `DELETE FROM CARS WHERE ID = ${req.params.id}`
+    db.run(car, (err,row) => {
+        if (err) {
+            console.log(err)
+            return res.send(err)
+        }
+        if (!row) {
             return res.send(`This id ${req.params.id} is not found`)
         }
         else
-            return res.send(`Car with the id ${req.params.id} is updated successfully`)
+            return res.send(`Car with the id ${req.params.id} is deleted`)
     })
 })
             return res.send(`The user with the id ${req.params.id} is deleted`)
