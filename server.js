@@ -64,6 +64,26 @@ server.delete(`/user/delete/:id`,(req,res)=>{
         else if(!row){
             return res.send (`This id ${req.params.id} is not found`)}
         else{
+
+// CARS
+//ADD CARS
+server.post(`/cars/addcars`, (req, res) => {
+    const brand = req.body.brand
+    const model = req.body.model
+    const km = req.body.km
+    const price = req.body.price
+    const email = req.body.email
+    let cars = `INSERT INTO CARS (BRAND,MODEL,KM,PRICE,EMAIL)
+        VALUES('${brand}','${model}','${km}',${price},'${email}') `
+    db.run(cars, (err) => {
+        if (err) {
+            console.log(err)
+            return res.send(err)
+        }
+        else
+            return res.send(`car added successfully`)
+    })
+})
             return res.send(`The user with the id ${req.params.id} is deleted`)
         }})})
 
