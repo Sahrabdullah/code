@@ -38,3 +38,18 @@ server.post(`/user/login`, (req, res) => { //req body
             return res.status(201).send(`Login Successfull`)  //201 is created
     })
 })
+
+//GET ALL USERS
+// ---- ADMIN
+server.get(`/users`, (req, res) => { //req body
+    const car = `SELECT * FROM USERS`
+    db.all(car, (err, rows) => {
+        if (err) {
+            console.log(err)
+            return res.send(err)
+        }
+        else
+            return res.send(rows)
+    })
+})
+
