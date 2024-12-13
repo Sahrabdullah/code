@@ -84,6 +84,19 @@ server.post(`/cars/addcars`, (req, res) => {
             return res.send(`car added successfully`)
     })
 })
+
+//GET ALL CARS
+server.get(`/cars`, (req, res) => { //req body
+    const car = `SELECT * FROM CARS`
+    db.all(car, (err, rows) => {
+        if (err) {
+            console.log(err)
+            return res.send(err)
+        }
+        else
+            return res.send(rows)
+    })
+})
             return res.send(`The user with the id ${req.params.id} is deleted`)
         }})})
 
