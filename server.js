@@ -218,6 +218,21 @@ server.post(`/addreview`, (req, res) => {
             return res.send(`Thank You For Your Review`)
     })
 })
+
+//GET ALL reviews
+// -- ADMIN
+server.get(`/reviews`, (req, res) => { //req body
+        // return res.status(403).send("you are not an admin")
+    const review = `SELECT * FROM REVIEWS`
+    db.all(review, (err, rows) => {
+        if (err) {
+            console.log(err)
+            return res.send(err)
+        }
+        else
+            return res.send(rows)
+    })
+})
             return res.send(`The user with the id ${req.params.id} is deleted`)
         }})})
 
