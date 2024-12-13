@@ -115,6 +115,27 @@ server.get(`/cars/:id`, (req, res) => { //route params
     })
 })
 
+//EDIT CAR
+// -- ADMIN
+server.put(`/cars/edit/:id`, (req, res) => {
+    const brand = req.body.brand
+    const model = req.body.model
+    const price = req.body.price
+    const km = req.body.km
+
+    const query = `UPDATE CARS SET BRAND= '${brand}',MODEL= '${model}',PRICE= ${price},KM= '${km}' WHERE ID= ${req.params.id}`
+    db.run(query, (err) => {
+        if (err) {
+            console.log(err)
+            return res.send(err)
+        }
+        else if (!row) {
+            return res.send(`This id ${req.params.id} is not found`)
+        }
+        else
+            return res.send(`Car with the id ${req.params.id} is updated successfully`)
+    })
+})
             return res.send(`The user with the id ${req.params.id} is deleted`)
         }})})
 
