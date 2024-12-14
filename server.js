@@ -1,9 +1,34 @@
-const express = require('express')
+const express = require('express') //library
+const cors = require('cors'); //connect frontend and backend
+const jwt = require('jsonwebtoken') //genrate a token
+const bcrypt = require('bcrypt'); //hashing 
+const cookieParser = require('cookie-parser'); //generating cookie
 const server = express()
 const db_access = require('./db.js')
 const db = db_access.db
 const port = 127
+const secret_key = 'QWERTYUIOPASDFGHJKLXCVBNM' // ecncrpt the hashing
+server.use(cors({
+    origin: "http://localhost:3000", //http for react 
+    credentials: true
+}))
 server.use(express.json()) //instead of using body parser
+server.use(cookieParser())
+const generateToken = (id, isADMIN) => {
+    return jwt.sign({ id, isADMIN }, secret_key, { expiresIn: '5h' })
+}
+const verifyToken = (req, res, next) => {
+    const token = req.cookies.authToken
+    if (!token)
+        return res.status(401).send('unauthorized')
+    jwt.verify(token, secret_key, (err, details) => {
+        if (err)
+            return res.status(403).send('invalid or expired token')
+        req.userDetails = details
+
+        next()
+    })
+}
 
 //USER
 //REGISTERATION
@@ -12,36 +37,58 @@ server.post(`/user/register`, (req, res) => { //req body
     const email = req.body.email
     const password = req.body.password
     const user_role = req.body.user_role
-    const content = `INSERT INTO USERS (NAME,EMAIL,PASSWORD,USER_ROLE, ISADMIN) 
-                VALUES ('${name}', '${email}','${password}', '${user_role}',0)`
-    db.run(content, (err) => {
+    bcrypt.hash(password, 10, (err, hashedPassword) => {
         if (err) {
-            console.log(err.message)
-            return res.status(401).send(`Registration Failed`)     //401 is unauthorized user
+            return res.status(500).send('error hashing password')
         }
-        else
-            return res.status(200).send(`Registered Successfully`)      //20 is OK
+        const content = `INSERT INTO USERS (NAME,EMAIL,PASSWORD,USER_ROLE, isADMIN) VALUES (?,?,?,?,?)`
+        db.run(content, [name, email, hashedPassword, user_role, 0], (err) => {
+            if (err) {
+                console.log(err.message)
+                return res.status(401).send(`Registration Failed`)     //401 is unauthorized user
+            }
+            else
+                return res.status(200).send(`Registered Successfully`)      //20 is OK
+        })
     })
 })
 
 
 //LOGIN
 server.post(`/user/login`, (req, res) => { //req body
-    // const name = req.body.name
     const email = req.body.email
     const password = req.body.password
 
-    db.get(`SELECT * FROM USERS WHERE EMAIL= '${email}' AND PASSWORD = '${password}' `, (err, row) => {
-        if (err || !row)
-            return res.status(401).send(`Fail to Login`) //401 is unauthorized user
-        else
-            return res.status(201).send(`Login Successfull`)  //201 is created
+    db.get(`SELECT * FROM USERS WHERE EMAIL=?`, [email], (err, row) => {
+        bcrypt.compare(password, row.PASSWORD, (err, isMatch) => {
+            if (err)
+                return res.status(500).send(`error comparing passwords.`) //401 is unauthorized user
+            if (!isMatch) {
+                return res.status(401).send(`Failed to login`)
+            }
+            else {
+                let userID = row.ID
+                let isAdmin = row.ISADMIN
+                const token = generateToken(userID, isAdmin)
+
+                res.cookie('authToken', token, {
+                    httpOnly: true,
+                    sameSite: 'none',
+                    secure: true,
+                    expiresIn: '5h'
+                })
+                return res.status(201).send(`Login Successfull`)  //201 is created
+            }
+        })
     })
 })
 
 //GET ALL USERS
 // ---- ADMIN
-server.get(`/users`, (req, res) => { //req body
+server.get(`/users`, verifyToken, (req, res) => { //req body
+    const isAdmin = req.userDetails.isAdmin;
+    if (isAdmin !== 1)
+        return res.status(403).send(`you are not an admin`)
     const car = `SELECT * FROM USERS`
     db.all(car, (err, rows) => {
         if (err) {
@@ -54,18 +101,16 @@ server.get(`/users`, (req, res) => { //req body
 })
 
 //DELETE USER
-server.delete(`/user/delete/:id`,(req,res)=>{
-     const user = `DELETE FROM USERS WHERE ID = ${req.params.id}`
-     db.run(user, (err) => {
-server.delete(`/user/delete/:id`, (req, res) => {
+// ---ADMIN
+server.delete(`/user/delete/:id`, verifyToken, (req, res) => {
+    const isAdmin = req.userDetails.isAdmin;
+    if (isAdmin !== 1)
+        return res.status(403).send(`you are not an admin`)
     const user = `DELETE FROM USERS WHERE ID = ${req.params.id}`
     db.run(user, (err) => {
         if (err) {
             console.log(err)
             return res.send(err)
-        }
-        else if (!row) {
-            return res.send(`This id ${req.params.id} is not found`)
         }
         else {
             return res.send(`The user with the id ${req.params.id} is deleted`)
@@ -76,7 +121,11 @@ server.delete(`/user/delete/:id`, (req, res) => {
 
 // CARS
 //ADD CARS
-server.post(`/cars/addcars`, (req, res) => {
+//--ADMIN
+server.post(`/cars/addcars`, verifyToken, (req, res) => {
+    const isAdmin = req.userDetails.isAdmin;
+    if (isAdmin !== 1)
+        return res.status(403).send(`you are not an admin`)
     const brand = req.body.brand
     const model = req.body.model
     const km = req.body.km
@@ -96,6 +145,7 @@ server.post(`/cars/addcars`, (req, res) => {
 
 //GET ALL CARS
 server.get(`/cars`, (req, res) => { //req body
+
     const car = `SELECT * FROM CARS`
     db.all(car, (err, rows) => {
         if (err) {
@@ -126,7 +176,10 @@ server.get(`/cars/:id`, (req, res) => { //route params
 
 //EDIT CAR
 // -- ADMIN
-server.put(`/cars/edit/:id`, (req, res) => {
+server.put(`/cars/edit/:id`, verifyToken, (req, res) => {
+    const isAdmin = req.userDetails.isAdmin;
+    if (isAdmin !== 1)
+        return res.status(403).send(`you are not an admin`)
     const brand = req.body.brand
     const model = req.body.model
     const price = req.body.price
@@ -138,7 +191,6 @@ server.put(`/cars/edit/:id`, (req, res) => {
             console.log(err)
             return res.send(err)
         }
-        else if (!row) {
         else
             return res.send(`Car with the id ${req.params.id} is updated successfully`)
     })
@@ -148,53 +200,50 @@ server.put(`/cars/edit/:id`, (req, res) => {
 // SEARCH CAR BY FEATURES
 // QUERY PARAMS
 server.get(`/car`, (req, res) => {
-        let brand = req.query.brand;
-        let model = req.query.model;
-        let price = req.query.price;
-        let km = req.query.km;
-    
-        let query = `SELECT * FROM CARS WHERE 1=1`; // Base query to append conditions
-    
-        if (brand) 
-            query += ` AND BRAND = '${brand}'`;
-        
-        if (model) 
-            query += ` AND MODEL = '${model}'`;
-        
-        if (price) 
-            query += ` AND PRICE = ${price}`;
-        
-        if (km) 
-            query += ` AND KM = ${km}`;
-    
-        db.all(query, (err, rows) => {
-            if (err) {
-                console.log(err);
-                return res.status(500).send(err);
-            }
-            else {
-                return res.json(rows); // Return filtered cars
-            }
-        });
+    let brand = req.query.brand;
+    let model = req.query.model;
+    let price = req.query.price;
+    let km = req.query.km;
+
+    let query = `SELECT * FROM CARS WHERE 1=1`; // Base query to append conditions
+
+    if (brand)
+        query += ` AND BRAND = '${brand}'`;
+
+    if (model)
+        query += ` AND MODEL = '${model}'`;
+
+    if (price)
+        query += ` AND PRICE = ${price}`;
+
+    if (km)
+        query += ` AND KM = ${km}`;
+
+    db.all(query, (err, rows) => {
+        if (err) {
+            console.log(err);
+            return res.status(500).send(err);
+        }
+        else {
+            return res.json(rows); // Return filtered cars
+        }
     });
+});
 
 
 
 //DELETE CARS
 //ROUTE PARAMS
 //-- ADMIN
-server.delete(`/cars/deletecar/:id`,verifyToken, (req, res) => {
-    const ISADMIN = req.userDetails.isAdmin;
-    if (ISADMIN !== 1)
-        return res.status(403).send("you are not an admin")
+server.delete(`/cars/deletecar/:id`, verifyToken, (req, res) => {
+    const isAdmin = req.userDetails.isAdmin;
+    if (isAdmin !== 1)
+        return res.status(403).send(`you are not an admin`)
     const car = `DELETE FROM CARS WHERE ID = ${req.params.id}`
-    db.run(car, (err,row) => {
+    db.run(car, (err, row) => {
         if (err) {
             console.log(err)
             return res.send(err)
-        }
-        if (!row) {
-            return res.send(`This id ${req.params.id} is not found`)
         }
         else
             return res.send(`Car with the id ${req.params.id} is deleted`)
@@ -221,8 +270,10 @@ server.post(`/addreview`, (req, res) => {
 
 //GET ALL reviews
 // -- ADMIN
-server.get(`/reviews`, (req, res) => { //req body
-        // return res.status(403).send("you are not an admin")
+server.get(`/reviews`, verifyToken, (req, res) => { //req body
+    const isAdmin = req.userDetails.isAdmin;
+    if (isAdmin !== 1)
+        return res.status(403).send(`you are not an admin`)
     const review = `SELECT * FROM REVIEWS`
     db.all(review, (err, rows) => {
         if (err) {
@@ -236,7 +287,10 @@ server.get(`/reviews`, (req, res) => { //req body
 
 //DELETE REVIEW
 // -- ADMIN
-server.delete(`/deletereview/:id`, (req, res) => {
+server.delete(`/deletereview/:id`, verifyToken, (req, res) => {
+    const isAdmin = req.userDetails.isAdmin;
+    if (isAdmin !== 1)
+        return res.status(403).send(`you are not an admin`)
     const car = `DELETE FROM REVIEWS WHERE ID = ${req.params.id}`
     db.run(car, (err) => {
         if (err) {
@@ -267,7 +321,10 @@ server.post(`/book`, ((req, res) => {
 
 //GET ALL BOOKINGS
 //-- ADMIN
-server.get(`/booking`,(req, res) => {
+server.get(`/booking`, verifyToken, (req, res) => {
+    const isAdmin = req.userDetails.isAdmin;
+    if (isAdmin !== 1)
+        return res.status(403).send(`you are not an admin`)
     const bookings = `SELECT * FROM BOOKING`
     db.all(bookings, (err, rows) => {
         if (err) {
@@ -281,10 +338,10 @@ server.get(`/booking`,(req, res) => {
 
 // DELETE BOOKINGS
 //-- ADMIN
-server.delete(`/delete/book/:id`, (req, res) => {
-    // const ISADMIN = req.userDetails.isAdmin;
-    // if (ISADMIN !== 1)
-    //     return res.status(403).send("you are not an admin")
+server.delete(`/delete/book/:id`, verifyToken, (req, res) => {
+    const isAdmin = req.userDetails.isAdmin;
+    if (isAdmin !== 1)
+        return res.status(403).send(`you are not an admin`)
     const books = `DELETE FROM BOOKING WHERE ID = ${req.params.id}`
     db.run(books, (err) => {
         if (err) {
@@ -322,3 +379,4 @@ server.listen(port, (error) => {
             });
         })
     })
+})
