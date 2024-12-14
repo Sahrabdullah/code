@@ -7,7 +7,7 @@ const server = express()
 const db_access = require('./db.js')
 const db = db_access.db
 const port = 127
-const secret_key = 'QWERTYUIOPASDFGHJKLXCVBNM' // ecncrpt the hashing
+const secret_key = 'poiuytrewqasdfghjklmnbvcxz' // ecncrpt the hashing
 server.use(cors({
     origin: "http://localhost:3000", //http for react 
     credentials: true
@@ -121,11 +121,8 @@ server.delete(`/user/delete/:id`, verifyToken, (req, res) => {
 
 // CARS
 //ADD CARS
-//--ADMIN
-server.post(`/cars/addcars`, verifyToken, (req, res) => {
-    const isAdmin = req.userDetails.isAdmin;
-    if (isAdmin !== 1)
-        return res.status(403).send(`you are not an admin`)
+
+server.post(`/cars/addcars`, (req, res) => {
     const brand = req.body.brand
     const model = req.body.model
     const km = req.body.km
