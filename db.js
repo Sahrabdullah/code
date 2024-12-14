@@ -1,5 +1,5 @@
 const sqlite3 = require('sqlite3')
-const db = new sqlite3.Database('car_search.db')
+const db = new sqlite3.Database('cars_search.db')
 
 //USERS TABLE
 const create_users_table = `CREATE TABLE IF NOT EXISTS USERS
@@ -18,7 +18,7 @@ BRAND TEXT NOT NULL,
 MODEL TEXT NOT NULL, 
 PRICE INT NOT NULL, 
 KM INTEGER NOT NULL,  
-EMAIL TEXT UNIQUE NOT NULL, 
+EMAIL TEXT NOT NULL, 
 USER_ID INTEGER,
 FOREIGN KEY (USER_ID) REFERENCES USERS (ID))`
 
